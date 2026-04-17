@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Magebit\KlaviyoSubscription\Magewire\Component;
 
+use Magebit\KlaviyoSubscription\Api\SmsPhoneValidationInterface;
 use Magewirephp\Magewire\Component;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Quote\Api\CartRepositoryInterface;
@@ -39,10 +40,12 @@ class SubscriptionCheckboxes extends Component
     /**
      * @param CheckoutSession $checkoutSession
      * @param CartRepositoryInterface $quoteRepository
+     * @param SmsPhoneValidationInterface $smsPhoneValidation
      */
     public function __construct(
         private readonly CheckoutSession $checkoutSession,
-        private readonly CartRepositoryInterface $quoteRepository
+        private readonly CartRepositoryInterface $quoteRepository,
+        private readonly SmsPhoneValidationInterface $smsPhoneValidation
     ) {
     }
 
@@ -104,9 +107,7 @@ class SubscriptionCheckboxes extends Component
                 return false;
             }
 
-            $sanitizedPhone = preg_replace('/\D/', '', $phoneNumber);
-
-            return strlen($sanitizedPhone) === 11 && $sanitizedPhone[0] === '1';
+            return $this->smsPhoneValidation->isValidForConfiguredRegions($phoneNumber);
         }
 
         return true;

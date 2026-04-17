@@ -12,6 +12,7 @@ namespace Magebit\KlaviyoSubscription\Plugin\Controller\Account;
 use Exception;
 use Klaviyo\Reclaim\Helper\ScopeSetting;
 use Magento\Customer\Controller\Account\CreatePost;
+use Magebit\KlaviyoSubscription\Api\SmsPhoneValidationInterface;
 use Magebit\KlaviyoSubscription\Helper\Data;
 
 /**
@@ -22,10 +23,12 @@ class CreatePostPlugin
     /**
      * @param ScopeSetting $klaviyoScopeSetting
      * @param Data $helper
+     * @param SmsPhoneValidationInterface $smsPhoneValidation
      */
     public function __construct(
         private readonly ScopeSetting $klaviyoScopeSetting,
         private readonly Data $helper,
+        private readonly SmsPhoneValidationInterface $smsPhoneValidation
     ) {
     }
 
@@ -54,9 +57,12 @@ class CreatePostPlugin
                     return $result;
                 }
 
-                $sanitizedPhoneNumber = '+' . preg_replace('/\D/', '', $phoneNumber);
+                $internationalPhone = $this->smsPhoneValidation->getInternationalNumberOrNull((string) $phoneNumber);
+                if ($internationalPhone === null) {
+                    return $result;
+                }
 
-                $this->helper->subscribeSmSToKlaviyoList($email, $sanitizedPhoneNumber);
+                $this->helper->subscribeSmSToKlaviyoList($email, $internationalPhone);
 
             } catch (Exception $exception) {
 

@@ -12,8 +12,10 @@ namespace Magebit\KlaviyoSubscription\ViewModel;
 use Exception;
 use Klaviyo\Reclaim\Helper\Logger;
 use Klaviyo\Reclaim\Helper\ScopeSetting;
+use Magebit\KlaviyoSubscription\Api\SmsPhoneValidationInterface;
 use Magebit\KlaviyoSubscription\Helper\Data as KlaviyoHelper;
 use Magebit\KlaviyoSubscription\KlaviyoV3Sdk\KlaviyoV3Api;
+use Magebit\KlaviyoSubscription\Model\Config as KlaviyoSubscriptionConfig;
 use Magento\Checkout\Model\Session as CheckoutSession;
 use Magento\Customer\Api\AddressRepositoryInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
@@ -52,6 +54,8 @@ class KlaviyoSubscriptionViewModel implements ArgumentInterface
      * @param StoreManagerInterface $storeManager
      * @param SubscriberFactory $subscriberFactory
      * @param KlaviyoHelper $klaviyoHelper
+     * @param SmsPhoneValidationInterface $smsPhoneValidation
+     * @param KlaviyoSubscriptionConfig $klaviyoSubscriptionConfig
      */
     public function __construct(
         private readonly Session $customerSession,
@@ -66,7 +70,9 @@ class KlaviyoSubscriptionViewModel implements ArgumentInterface
         private readonly SubscriptionManager $subscriptionManager,
         private readonly StoreManagerInterface $storeManager,
         private readonly SubscriberFactory $subscriberFactory,
-        private readonly KlaviyoHelper $klaviyoHelper
+        private readonly KlaviyoHelper $klaviyoHelper,
+        private readonly SmsPhoneValidationInterface $smsPhoneValidation,
+        private readonly KlaviyoSubscriptionConfig $klaviyoSubscriptionConfig
     ) {
     }
 
@@ -259,8 +265,19 @@ class KlaviyoSubscriptionViewModel implements ArgumentInterface
     }
 
     /**
-     * Check if Default Address has a foreign phone number and determine
-     * if SMS checkbox needs to be seen, as SMS is only available for US, CA.
+     * ISO country codes enabled for SMS validation (store scope).
+     *
+     * @return array<int, string>
+     */
+    public function getEnabledSmsValidationCountryCodes(): array
+    {
+        return $this->klaviyoSubscriptionConfig->getEnabledSmsCountries(
+            (int) $this->storeManager->getStore()->getId()
+        );
+    }
+
+    /**
+     * Check if default address telephone is valid for configured Klaviyo SMS regions.
      *
      * @return bool
      */
@@ -304,9 +321,7 @@ class KlaviyoSubscriptionViewModel implements ArgumentInterface
      */
     public function validatePhoneNumber(string $phoneNumber): bool
     {
-        $sanitizedPhone = preg_replace('/\D/', '', $phoneNumber);
-
-        return strlen($sanitizedPhone) === 11 && $sanitizedPhone[0] === '1';
+        return $this->smsPhoneValidation->isValidForConfiguredRegions($phoneNumber);
     }
 
     /**

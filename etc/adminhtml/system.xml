@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @author    Magebit <info@magebit.com>
+ * @copyright Copyright (c) Magebit, Ltd. (https://magebit.com)
+ * @license   https://magebit.com/code-license
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <tab id="magebit" translate="label" sortOrder="200">
+            <label>Magebit</label>
+        </tab>
+        <section id="magebit_klaviyo" translate="label" sortOrder="120" showInDefault="1" showInWebsite="1" showInStore="1">
+            <label>Klaviyo</label>
+            <tab>magebit</tab>
+            <resource>Magebit_KlaviyoSubscription::config</resource>
+            <group id="sms_validation" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>SMS phone validation</label>
+                <comment>Regions where a telephone number is accepted for Klaviyo SMS subscribe flows. Align with Klaviyo SMS availability.</comment>
+                <field id="countries" translate="label comment" type="multiselect" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                    <label>Allowed countries</label>
+                    <comment>Select ISO country codes used when validating customer phone numbers for SMS subscription (checkout, account, newsletter).</comment>
+                    <source_model>Magebit\KlaviyoSubscription\Model\Config\Source\KlaviyoSmsCountries</source_model>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

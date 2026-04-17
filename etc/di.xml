@@ -21,6 +21,8 @@
     </type>
     <preference for="Klaviyo\Reclaim\Observer\SaveOrderMarketingConsent"
                 type="Magebit\KlaviyoSubscription\Observer\SaveOrderMarketingConsent"/>
+    <preference for="Magebit\KlaviyoSubscription\Api\SmsPhoneValidationInterface"
+                type="Magebit\KlaviyoSubscription\Model\SmsPhoneValidation"/>
     <type name="Magento\Quote\Api\CartRepositoryInterface">
         <plugin name="join_subscriptions_to_quote" type="Magebit\KlaviyoSubscription\Plugin\QuoteRepositoryPlugin" />
     </type>

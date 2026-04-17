@@ -33,10 +33,11 @@ $telephoneViewModel = $viewModels->require(Telephone::class);
 /** @var Modal $modalViewModel */
 $modalViewModel = $viewModels->require(Modal::class);
 
+$allowedIso = $subscribeToSmSViewModel->getEnabledSmsValidationCountryCodes();
 $countries = array_filter(
     $telephoneViewModel->getCountryList(),
-    function ($country) {
-        return in_array($country['value'], ['US', 'CA']);
+    static function ($country) use ($allowedIso) {
+        return in_array($country['value'], $allowedIso, true);
     }
 );
 

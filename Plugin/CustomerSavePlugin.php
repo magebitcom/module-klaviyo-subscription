@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Magebit\KlaviyoSubscription\Plugin;
 
+use Magebit\KlaviyoSubscription\Api\SmsPhoneValidationInterface;
 use Magebit\KlaviyoSubscription\Helper\Data;
 use Magento\Customer\Api\AddressRepositoryInterface;
 use Magento\Customer\Api\CustomerRepositoryInterface;
@@ -30,13 +31,15 @@ class CustomerSavePlugin
      * @param AddressRepositoryInterface $addressRepository
      * @param SubscriptionManager $subscriptionManager
      * @param StoreManagerInterface $storeManager
+     * @param SmsPhoneValidationInterface $smsPhoneValidation
      */
     public function __construct(
         private readonly RequestInterface $request,
         private readonly Data $helper,
         private readonly AddressRepositoryInterface $addressRepository,
         private readonly SubscriptionManager $subscriptionManager,
-        private readonly StoreManagerInterface $storeManager
+        private readonly StoreManagerInterface $storeManager,
+        private readonly SmsPhoneValidationInterface $smsPhoneValidation
     ) {
     }
 
@@ -97,15 +100,13 @@ class CustomerSavePlugin
                     return;
                 }
 
-                $validationPhoneNumber = preg_replace('/\D/', '', $phoneNumber);
+                $internationalPhone = $this->smsPhoneValidation->getInternationalNumberOrNull($phoneNumber);
 
-                if (!$phoneNumber || !(strlen($validationPhoneNumber) === 11 && $validationPhoneNumber[0] === '1')) {
+                if ($internationalPhone === null) {
                     return;
                 }
 
-                $sanitizedPhoneNumber = '+' . preg_replace('/\D/', '', $phoneNumber);
-
-                $this->helper->subscribeSmSToKlaviyoList($customer->getEmail(), $sanitizedPhoneNumber);
+                $this->helper->subscribeSmSToKlaviyoList($customer->getEmail(), $internationalPhone);
             } elseif ($isSmsSubscribedState && !$isSmsSubscribed) {
                 $this->helper->unsubscribeSmSFromKlaviyoList($email);
             }

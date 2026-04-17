@@ -13,6 +13,7 @@ use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
 use Magento\Customer\Model\Customer;
 use Magento\Customer\Model\Session;
 use Magento\Newsletter\Controller\Manage\Save;
+use Magebit\KlaviyoSubscription\Api\SmsPhoneValidationInterface;
 use Magebit\KlaviyoSubscription\Helper\Data;
 
 /**
@@ -24,11 +25,13 @@ class SubscribeFromCustomerDashboard
      * @param Session $customerSession
      * @param CustomerRepository $customerRepository
      * @param Data $helper
+     * @param SmsPhoneValidationInterface $smsPhoneValidation
      */
     public function __construct(
         private readonly Session $customerSession,
         private readonly CustomerRepository $customerRepository,
         private readonly Data $helper,
+        private readonly SmsPhoneValidationInterface $smsPhoneValidation,
     ) {
     }
 
@@ -63,14 +66,13 @@ class SubscribeFromCustomerDashboard
                     return;
                 }
 
-                $sanitizedPhoneNumber = '+'. preg_replace('/[^0-9]/', '', $telephone);
-                $validationPhoneNumber = preg_replace('/\D/', '', $telephone);
+                $internationalPhone = $this->smsPhoneValidation->getInternationalNumberOrNull($telephone);
 
-                if (!$telephone || !(strlen($validationPhoneNumber) === 11 && $validationPhoneNumber[0] === '1')) {
+                if ($internationalPhone === null) {
                     return;
                 }
 
-                $this->helper->subscribeSmSToKlaviyoList($customer->getEmail(), $sanitizedPhoneNumber);
+                $this->helper->subscribeSmSToKlaviyoList($customer->getEmail(), $internationalPhone);
 
             } elseif ($isSmsSubscribedState && !$isSmsSubscribedParam) {
                 // Going from subscribed -> unsubscribed

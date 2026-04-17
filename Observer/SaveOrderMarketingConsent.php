@@ -17,6 +17,7 @@ use Magento\Framework\Event\Observer;
 use Klaviyo\Reclaim\Observer\SaveOrderMarketingConsent as CoreObserver;
 use Magento\Newsletter\Model\SubscriptionManagerInterface;
 use Magento\Store\Model\StoreManagerInterface;
+use Magebit\KlaviyoSubscription\Api\SmsPhoneValidationInterface;
 use Magebit\KlaviyoSubscription\Helper\Data;
 
 /**
@@ -32,6 +33,7 @@ class SaveOrderMarketingConsent extends CoreObserver
      * @param Data $helper
      * @param ScopeSetting $klaviyoScopeSetting
      * @param Webhook $webhookHelper
+     * @param SmsPhoneValidationInterface $smsPhoneValidation
      */
     public function __construct(
         private readonly Session $customerSession,
@@ -40,7 +42,8 @@ class SaveOrderMarketingConsent extends CoreObserver
         private readonly SubscriptionManagerInterface $subscriptionManager,
         private readonly Data $helper,
         private readonly ScopeSetting $klaviyoScopeSetting,
-        Webhook $webhookHelper
+        Webhook $webhookHelper,
+        private readonly SmsPhoneValidationInterface $smsPhoneValidation
     ) {
         parent::__construct(
             $webhookHelper,
@@ -65,17 +68,15 @@ class SaveOrderMarketingConsent extends CoreObserver
         $customer = $customerId ? $this->customerRepository->getById($customerId) : null;
 
         $phoneNumber = $address->getTelephone() ?? '';
-        $sanitizedPhoneNumber = '+'. preg_replace('/[^0-9]/', '', $phoneNumber);
-        $validationPhoneNumber = preg_replace('/\D/', '', $phoneNumber);
-
-        if (!$phoneNumber || !(strlen($validationPhoneNumber) === 11 && $validationPhoneNumber[0] === '1')) {
-            return;
-        }
+        $internationalPhone = $phoneNumber !== ''
+            ? $this->smsPhoneValidation->getInternationalNumberOrNull($phoneNumber)
+            : null;
 
         if ($quote->getExtensionAttributes()->getSmsSubscription()
             && $this->_klaviyoScopeSetting->getConsentAtCheckoutSMSIsActive()
+            && $internationalPhone !== null
         ) {
-            $this->helper->subscribeSmSToKlaviyoList($quote->getCustomerEmail(), $sanitizedPhoneNumber);
+            $this->helper->subscribeSmSToKlaviyoList($quote->getCustomerEmail(), $internationalPhone);
         }
         if ($quote->getExtensionAttributes()->getGeneralSubscription()
             && $this->_klaviyoScopeSetting->getConsentAtCheckoutEmailIsActive()
