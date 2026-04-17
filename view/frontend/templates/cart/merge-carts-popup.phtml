@@ -1,0 +1,41 @@
+<?php
+/**
+ * @author    Magebit <info@magebit.com>
+ * @copyright Copyright (c) Magebit, Ltd. (https://magebit.com)
+ * @license   https://magebit.com/code-license
+ */
+
+declare(strict_types=1);
+
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/**
+ * @var Template $block
+ * @var Escaper $escaper
+ */
+?>
+
+<div id="reorder-quote-popup" class="w-full">
+    <div class="quote-reorder-message flex flex-col gap-4">
+        <p>
+            <?= $escaper->escapeHtml(__('You have items in your shopping cart. Would you like to merge items in this order with items of this shopping cart or replace them?')) ?>
+        </p>
+
+        <p>
+            <?= $escaper->escapeHtml(__('Select Cancel to stay on the current page.')) ?>
+        </p>
+    </div>
+    <div class="flex flex-col md:flex-row-reverse justify-start gap-3 pt-5">
+        <button type="button" class="action merge btn btn-primary w-full md:w-auto" @click="mergeAction()">
+            <?= $escaper->escapeHtmlAttr(__('Merge')) ?>
+        </button>
+        <button type="button" class="action replace btn btn-secondary w-full md:w-auto" @click="replaceAction()">
+            <?= $escaper->escapeHtmlAttr(__('Replace')) ?>
+        </button>
+        <button type="button" class="btn btn-secondary w-full md:w-auto" @click="cancel">
+            <?= $escaper->escapeHtmlAttr(__('Cancel')) ?>
+        </button>
+    </div>
+
+</div>

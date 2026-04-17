@@ -1,0 +1,81 @@
+<?php
+/**
+ * @author    Magebit <info@magebit.com>
+ * @copyright Copyright (c) Magebit, Ltd. (https://magebit.com)
+ * @license   https://magebit.com/code-license
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\Modal;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/**
+ * @var Template $block
+ * @var Escaper $escaper
+ * @var ViewModelRegistry $viewModels
+ * @var Modal $modalViewModel
+ */
+
+$modalViewModel = $viewModels->require(Modal::class);
+
+$dialogRefName = 'mergeCartsDialogPopup';
+
+$mergeReplaceModal = $modalViewModel->createModal()
+    ->withTemplate('Magebit_KlaviyoSubscription::cart/merge-carts-popup.phtml')
+    ->withTitle('The shopping cart isn\'t empty')
+    ->withDialogRefName($dialogRefName);
+
+$canMergeRequestedQuote = $block->isMergeAllowedForRequest();
+$requestedQuoteId = $block->getRequestedQuoteId();
+?>
+
+<div x-data="Object.assign(mergeCartsPopup(), hyva.modal())"
+>
+    <?= /** @noEscape  */ $mergeReplaceModal ?>
+</div>
+
+<script>
+    'use strict';
+
+    function mergeCartsPopup() {
+        return {
+            quoteId: null,
+            init() {
+                var self = this;
+                document.addEventListener('DOMContentLoaded', function () {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const requestedQuoteId = '<?= $escaper->escapeJs($requestedQuoteId ?? '') ?>';
+                    const canMerge = <?= $canMergeRequestedQuote ? 'true' : 'false' ?>;
+                    self.quoteId = canMerge ? requestedQuoteId : null;
+
+                    if (self.quoteId && canMerge && urlParams.get('mergeCarts') === '1') {
+                        window.dispatchEvent(new CustomEvent('hyva-modal-show', {
+                            detail: {
+                                dialog: '<?= $escaper->escapeJs($mergeReplaceModal->getDialogRefName()) ?>'
+                            }
+                        }));
+                    }
+                });
+            },
+            mergeAction() {
+                if (!this.quoteId) {
+                    this.cancel();
+
+                    return;
+                }
+                window.location.href = '/magebitReclaim/checkout/mergeCarts?quoteId=' + this.quoteId + '&replace=0';
+            },
+            replaceAction() {
+                if (!this.quoteId) {
+                    this.cancel();
+
+                    return;
+                }
+                window.location.href = '/magebitReclaim/checkout/mergeCarts?quoteId=' + this.quoteId + '&replace=1';
+            }
+        }
+    }
+</script>

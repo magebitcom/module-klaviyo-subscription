@@ -1,0 +1,72 @@
+<?php
+/**
+ * This file is part of the Magebit/venta design package.
+ *
+ * DISCLAIMER
+ *
+ * Do not edit or add to this file if you wish to upgrade Magebit/venta
+ * to newer versions in the future.
+ *
+ * @copyright Copyright (c) 2024 Magebit, Ltd. (https://magebit.com/)
+ * @author    Magebit <info@magebit.com>
+ * @license   MIT
+ */
+
+declare(strict_types=1);
+
+/** @var Newsletter $block */
+/** @var Escaper $escaper */
+
+use Magento\Customer\Block\Newsletter;
+use Magento\Framework\Escaper;
+use Hyva\Theme\Model\ViewModelRegistry;
+use Magebit\KlaviyoSubscription\ViewModel\KlaviyoSubscriptionViewModel;
+
+/** @var ViewModelRegistry $viewModels */
+/** @var KlaviyoSubscriptionViewModel $smsSubscriptionViewModel */
+$smsSubscriptionViewModel = $viewModels->require(KlaviyoSubscriptionViewModel::class);
+?>
+<?= $block->getChildHtml('form_before') ?>
+    <div class="md:grid lg:grid-cols-2 gap-6">
+        <form class="form bg-gray-100 p-6 md:p-10 rounded"
+              action="<?= $escaper->escapeUrl($block->getAction()) ?>"
+              method="post"
+              id="form-validate">
+            <fieldset class="fieldset">
+                <?= $block->getBlockHtml('formkey') ?>
+                <div class="title-lg text-title mb-3">
+                    <span>
+                        <?= $escaper->escapeHtml(__('Subscription option')) ?>
+                    </span>
+                </div>
+                <ul class="ul-list">
+                    <li><?= $escaper->escapeHtml(__('Be the first to learn about upcoming products')) ?></li>
+                    <li><?= $escaper->escapeHtml(__('Get latest news about our promotions')) ?></li>
+                </ul>
+                <div class="field choice flex my-7 items-center">
+                    <input type="checkbox" name="is_subscribed" id="subscription" value="1"
+                           aria-label="<?= $escaper->escapeHtmlAttr(__('General Subscription')) ?>"
+                           <?php if ($smsSubscriptionViewModel->isCustomerEmailSubscribed()): ?> checked<?php endif; ?>
+                           class="checkbox">
+                    <label for="subscription" class="label">
+                    <span>
+                        <?= $escaper->escapeHtml(__('General Subscription')) ?>
+                    </span>
+                    </label>
+                </div>
+                <?php if ($smsSubscriptionViewModel->showSmSCheckbox()): ?>
+                    <?= $block->getChildHtml('sms_subscription') ?>
+                <?php endif; ?>
+            </fieldset>
+            <button type="submit"
+                    aria-label="<?= $escaper->escapeHtmlAttr(__('Save')) ?>"
+                    class="btn btn-primary w-full md:w-auto"
+            >
+                    <span>
+                        <?= $escaper->escapeHtml(__('Save')) ?>
+                    </span>
+            </button>
+        </form>
+    </div>
+<?php /* Extensions placeholder */ ?>
+<?= $block->getChildHtml('customer.form.newsletter.extra2') ?>

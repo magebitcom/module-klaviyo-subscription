@@ -1,0 +1,206 @@
+<?php
+/**
+ * @author    Magebit <info@magebit.com>
+ * @copyright Copyright (c) Magebit, Ltd. (https://magebit.com)
+ * @license   https://magebit.com/code-license
+ */
+
+declare(strict_types=1);
+
+namespace Magebit\KlaviyoSubscription\Plugin;
+
+use Klaviyo\Reclaim\Helper\Logger;
+use Klaviyo\Reclaim\Helper\ScopeSetting;
+use Magebit\KlaviyoSubscription\Helper\Data as KlaviyoHelper;
+use Magebit\KlaviyoSubscription\KlaviyoV3Sdk\KlaviyoV3Api;
+use Magento\Customer\Api\CustomerRepositoryInterface as CustomerRepository;
+use Magento\Customer\Model\Customer\DataProviderWithDefaultAddresses;
+use Magento\Framework\App\RequestInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
+use Magento\Framework\Serialize\Serializer\Json;
+use Magento\Newsletter\Model\Subscriber;
+use Magento\Newsletter\Model\SubscriberFactory;
+use Magento\Newsletter\Model\SubscriptionManager;
+use Magento\Store\Model\StoreManagerInterface;
+
+class AddSubscriptionsToCustomerData
+{
+    /**
+     * @var array|bool
+     */
+    private $userInfo = false;
+
+    /**
+     * @param RequestInterface $request
+     * @param CustomerRepository $customerRepository
+     * @param Logger $klaviyoLogger
+     * @param Json $json
+     * @param SubscriptionManager $subscriptionManager
+     * @param StoreManagerInterface $storeManager
+     * @param SubscriberFactory $subscriberFactory
+     * @param ScopeSetting $klaviyoScopeSetting
+     * @param KlaviyoHelper $klaviyoHelper
+     */
+    public function __construct(
+        private readonly RequestInterface $request,
+        private readonly CustomerRepository $customerRepository,
+        private readonly Logger $klaviyoLogger,
+        private readonly Json $json,
+        private readonly SubscriptionManager $subscriptionManager,
+        private readonly StoreManagerInterface $storeManager,
+        private readonly SubscriberFactory $subscriberFactory,
+        private readonly ScopeSetting $klaviyoScopeSetting,
+        private readonly KlaviyoHelper $klaviyoHelper
+    ) {
+    }
+
+    /**
+     * @param DataProviderWithDefaultAddresses $subject
+     * @param array $result
+     * @return array
+     */
+    public function afterGetData(DataProviderWithDefaultAddresses $subject, array $result): array
+    {
+        $customerId = $this->request->getParam('id') ?: null;
+
+        if (!$customerId) {
+            return $result;
+        }
+
+        $result[$customerId]['customer']['newsletter_subscription'] = (string) $this->isCustomerEmailSubscribed();
+        $result[$customerId]['customer']['is_sms_subscribed'] = (string) $this->isCustomerSmsSubscribed();
+
+        return $result;
+    }
+
+    /**
+     * Check if the customer is subscribed to SMS.
+     *
+     * @return bool
+     */
+    public function isCustomerSmsSubscribed(): bool
+    {
+        $email = $this->getCustomerEmail();
+        if (!$email) {
+            return false;
+        }
+
+        $user = $this->searchProfileByEmail($email);
+
+        if (!$user) {
+            return false;
+        }
+
+        if (!isset($user['response']['data'][0]['attributes']['subscriptions']['sms']['marketing']['consent'])) {
+            $this->klaviyoLogger->log(
+                sprintf('Unable to fetch, email number is missing: %s', $this->json->serialize($user))
+            );
+
+            $this->klaviyoHelper->saveSmsSubscriptionAttribute($email, false);
+
+            return false;
+        }
+
+        $consent = $user['response']['data'][0]['attributes']['subscriptions']['sms']['marketing']['consent'];
+
+        $isSmsSubscribed = $consent === KlaviyoV3Api::SUBSCRIBE;
+
+        $this->klaviyoHelper->saveSmsSubscriptionAttribute($email, $isSmsSubscribed);
+
+        return $isSmsSubscribed;
+    }
+
+    /**
+     * Check if the customer is subscribed to the newsletter.
+     *
+     * @return bool
+     */
+    public function isCustomerEmailSubscribed(): bool
+    {
+        $email = $this->getCustomerEmail();
+        if (!$email) {
+            return false;
+        }
+
+        $user = $this->searchProfileByEmail($email);
+
+        if (!isset($user['response']['data'][0]['attributes']['subscriptions']['email']['marketing']['consent'])) {
+            $this->klaviyoLogger->log(
+                sprintf('Unable to fetch, email number is missing: %s', $this->json->serialize($user))
+            );
+
+            return false;
+        }
+
+        $consent = $user['response']['data'][0]['attributes']['subscriptions']['email']['marketing']['consent'];
+
+        $isKlaviyoSubscribed = $consent === KlaviyoV3Api::SUBSCRIBE;
+
+        if ($isKlaviyoSubscribed) {
+            $this->subscriptionManager->subscribe($email, (int) $this->storeManager->getStore()->getId());
+
+            return true;
+        }
+
+        /**
+         * @var Subscriber $subscriber
+         */
+        $subscriber = $this->subscriberFactory->create()->loadBySubscriberEmail(
+            $email,
+            (int) $this->storeManager->getWebsite()->getId()
+        );
+
+        if ($subscriber->isSubscribed()) {
+            $code = $subscriber->getSubscriberConfirmCode();
+
+            $this->subscriptionManager->unsubscribe($email, (int) $this->storeManager->getStore()->getId(), $code);
+        }
+
+        return $isKlaviyoSubscribed;
+    }
+
+    /**
+     * Get customer email
+     *
+     * @return string|null
+     */
+    private function getCustomerEmail(): ?string
+    {
+        $customerId = $this->request->getParam('id') ?: null;
+
+        if (!$customerId) {
+            return null;
+        }
+
+        try {
+            $customer = $this->customerRepository->getById($customerId);
+        } catch (NoSuchEntityException $e) {
+            return null;
+        }
+
+        return $customer->getEmail();
+    }
+
+    /**
+     * Search profile by email
+     *
+     * @param string $email
+     * @return array|bool
+     */
+    private function searchProfileByEmail(string $email): array|bool
+    {
+        if ($this->userInfo) {
+            return $this->userInfo;
+        }
+
+        $api = new KlaviyoV3Api(
+            $this->klaviyoScopeSetting->getPublicApiKey(),
+            $this->klaviyoScopeSetting->getPrivateApiKey(),
+            $this->klaviyoScopeSetting
+        );
+
+        $this->userInfo = $api->searchProfileByEmail($email);
+
+        return $this->userInfo;
+    }
+}

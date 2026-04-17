@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @author    Magebit <info@magebit.com>
+ * @copyright Copyright (c) Magebit, Ltd. (https://magebit.com)
+ * @license   https://magebit.com/code-license
+ */
+-->
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <update handle="customer_account"/>
+    <body>
+        <referenceContainer name="content">
+            <referenceBlock name="customer_newsletter">
+                <action method="setTemplate">
+                    <argument name="template" xsi:type="string">Magebit_KlaviyoSubscription::form/newsletter.phtml</argument>
+                </action>
+                <block class="Magento\Framework\View\Element\Template"
+                       name="sms_subscription"
+                       template="Magebit_KlaviyoSubscription::sms_subscription.phtml">
+                    <block class="Magento\Framework\View\Element\Template"
+                           name="phone-input"
+                           template="Magebit_KlaviyoSubscription::phone-input.phtml"/>
+                </block>
+            </referenceBlock>
+        </referenceContainer>
+    </body>
+</page>

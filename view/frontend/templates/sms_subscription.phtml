@@ -1,0 +1,94 @@
+<?php
+/**
+ * @author    Magebit <info@magebit.com>
+ * @copyright Copyright (c) Magebit, Ltd. (https://magebit.com)
+ * @license   https://magebit.com/code-license
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\SvgIcons;
+use Magebit\Checkout\ViewModel\Telephone;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+use Magebit\KlaviyoSubscription\ViewModel\KlaviyoSubscriptionViewModel;
+use Hyva\Theme\ViewModel\Modal;
+
+/** @var Template $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var KlaviyoSubscriptionViewModel $subscribeToSmSViewModel */
+$subscribeToSmSViewModel = $viewModels->require(KlaviyoSubscriptionViewModel::class);
+if (!$subscribeToSmSViewModel->isKlaviyoEnabled()) {
+    return;
+}
+
+/** @var SvgIcons $icons */
+$icons = $viewModels->require(SvgIcons::class);
+
+/** @var Telephone $telephoneViewModel */
+$telephoneViewModel = $viewModels->require(Telephone::class);
+/** @var Modal $modalViewModel */
+$modalViewModel = $viewModels->require(Modal::class);
+
+$countries = array_filter(
+    $telephoneViewModel->getCountryList(),
+    function ($country) {
+        return in_array($country['value'], ['US', 'CA']);
+    }
+);
+
+$phoneInputBlock = $block->getChildBlock('phone-input')->setData('countries', $countries);
+$isCustomerSmsSubscribed = $subscribeToSmSViewModel->isCustomerSmsSubscribed();
+?>
+
+<div x-data="initSmsSubscription()"
+     class="sms-subscription-section">
+    <div class="field choice flex my-7">
+        <div class="control">
+            <input type="checkbox"
+                   name="sms_subscribed_checkbox"
+                   id="sms_subscribed_checkbox"
+                   class="self-start !w-auto mr-3 mt-0.5"
+                   @change="
+                     isSmsSubscribed = $event.target.checked;
+                     showTelephone = isSmsSubscribed;
+                   "
+                <?php if ($isCustomerSmsSubscribed): ?>
+                    checked="checked"
+                <?php endif; ?>
+            />
+            <label for="sms_subscribed_checkbox"
+                   x-data="{...hyva.modal(), ...fetchModalContent()}"
+                   class="sms-subscription !pl-0 leading-6.5 !text-primary-600 select-none">
+                <?= /* @noEscape */ $subscribeToSmSViewModel->getCheckboxLabel() ?>
+            </label>
+        </div>
+    </div>
+    <?php if (!$isCustomerSmsSubscribed): ?>
+         <template x-if="showTelephone" x-transition>
+            <div>
+                <?= $phoneInputBlock->toHtml() ?>
+            </div>
+        </template>
+    <?php endif; ?>
+    <input type="hidden"
+           :value="isSmsSubscribed ? 1 : 0"
+           name="is_sms_subscribed"
+           id="is_sms_subscribed"
+    />
+</div>
+
+<script>
+    function initSmsSubscription() {
+        return {
+            isSmsSubscribed: false,
+            showTelephone: false,
+            init() {
+                this.showTelephone = '<?= /** @noEscape */ $isCustomerSmsSubscribed ?>';
+            }
+        }
+    }
+</script>

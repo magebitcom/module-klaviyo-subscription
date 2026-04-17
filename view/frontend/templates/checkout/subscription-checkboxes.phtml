@@ -1,0 +1,72 @@
+<?php
+/**
+ * @author    Magebit <info@magebit.com>
+ * @copyright Copyright (c) Magebit, Ltd. (https://magebit.com)
+ * @license   https://magebit.com/code-license
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Magebit\KlaviyoSubscription\Magewire\Component\SubscriptionCheckboxes;
+use Magebit\KlaviyoSubscription\ViewModel\KlaviyoSubscriptionViewModel;
+use Magento\Framework\Escaper;
+use Magebit\RequestCatalog\ViewModel\PrivacyPolicy;
+use Hyva\Theme\ViewModel\Modal;
+use Hyva\Theme\ViewModel\SvgIcons;
+
+/** @var ViewModelRegistry $viewModels */
+/** @var Escaper $escaper */
+/** @var SubscriptionCheckboxes $magewire */
+/** @var SvgIcons $icons */
+
+$privacyPolicyViewModel = $viewModels->require(PrivacyPolicy::class);
+$popupContent = $privacyPolicyViewModel->getPopupContent();
+$modalViewModel = $viewModels->require(Modal::class);
+
+/** @var KlaviyoSubscriptionViewModel $subscribeToSmSViewModel */
+$subscribeToSmSViewModel = $viewModels->require(KlaviyoSubscriptionViewModel::class);
+$icons = $viewModels->require(SvgIcons::class);
+?>
+<?php if (!$subscribeToSmSViewModel->isKlaviyoEnabled()): ?>
+    <div>
+    </div>
+<?php else: ?>
+    <?php
+    $subscriptions = $subscribeToSmSViewModel->getCustomerSubscriptions();
+    ?>
+    <div class="px-5 md:px-0 pt-8">
+        <div>
+            <fieldset>
+                <?php if (!isset($subscriptions['general_subscription']) || !$subscriptions['general_subscription']): ?>
+                    <div class="field choice mb-3 flex items-center">
+                        <input type="checkbox"
+                               id="general_subscription_desktop"
+                               name="general_subscription"
+                               wire:model="general_subscription"
+                               class="flex-shrink-0 align-middle"
+                        />
+                        <label for="general_subscription" class="!text-xs !leading-4.5 pl-2">
+                            <?= $escaper->escapeHtmlAttr(__('I want to receive newsletter to stay up to date')) ?>
+                        </label>
+                    </div>
+                <?php endif; ?>
+                <?php if ($magewire->showSmSSubscription() && (!isset($subscriptions['sms_subscription']) ||
+                        !$subscriptions['sms_subscription'])): ?>
+                    <div class="field choice flex items-start">
+                        <input type="checkbox"
+                               id="sms_subscription_desktop"
+                               name="sms_subscription"
+                               wire:model="sms_subscription"
+                               class="flex-shrink-0"
+                        />
+                        <label for="sms_subscription"
+                               class="inline !text-xs !leading-4.5 pl-3 text-secondary-700">
+                            <?= /* @noEscape */ $subscribeToSmSViewModel->getCheckboxLabel() ?>
+                        </label>
+                    </div>
+                <?php endif; ?>
+            </fieldset>
+        </div>
+    </div>
+<?php endif; ?>

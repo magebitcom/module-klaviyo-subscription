@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @author    Magebit <info@magebit.com>
+ * @copyright Copyright (c) Magebit, Ltd. (https://magebit.com)
+ * @license   https://magebit.com/code-license
+ */
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Customer\Model\Customer\DataProviderWithDefaultAddresses">
+        <plugin name="addSubscriptionsToCustomerData"
+                type="Magebit\KlaviyoSubscription\Plugin\AddSubscriptionsToCustomerData"/>
+    </type>
+    <type name="Magento\Customer\Api\CustomerRepositoryInterface">
+        <plugin name="customer_save_after_klaviyo"
+                type="Magebit\KlaviyoSubscription\Plugin\CustomerSavePlugin"/>
+    </type>
+    <preference for="Magento\Ui\Component\Layout\Tabs" type="Magebit\KlaviyoSubscription\Component\Layout\Tabs"/>
+</config>
