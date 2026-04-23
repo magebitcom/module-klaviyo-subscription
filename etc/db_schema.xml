@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!--
+/**
+ * @author    Magebit <info@magebit.com>
+ * @copyright Copyright (c) Magebit, Ltd. (https://magebit.com)
+ * @license   https://magebit.com/code-license
+ */
+-->
+<schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Setup/Declaration/Schema/etc/schema.xsd">
+    <table name="quote" resource="default" engine="innodb">
+        <column xsi:type="boolean" name="general_subscription" nullable="true" default="false" comment="General Subscription" />
+        <column xsi:type="boolean" name="sms_subscription" nullable="true" default="false" comment="SMS Subscription" />
+    </table>
+</schema>

@@ -26,4 +26,7 @@
     <type name="Magento\Quote\Api\CartRepositoryInterface">
         <plugin name="join_subscriptions_to_quote" type="Magebit\KlaviyoSubscription\Plugin\QuoteRepositoryPlugin" />
     </type>
+    <type name="Magento\Customer\Api\CustomerRepositoryInterface">
+        <plugin name="join_attributes" type="Magebit\KlaviyoSubscription\Plugin\CustomerRepositoryPlugin" />
+    </type>
 </config>

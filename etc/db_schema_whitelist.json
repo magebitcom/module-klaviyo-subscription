@@ -1,0 +1,8 @@
+{
+    "quote": {
+        "column": {
+            "general_subscription": true,
+            "sms_subscription": true
+        }
+    }
+}
