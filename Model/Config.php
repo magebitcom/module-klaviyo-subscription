@@ -17,6 +17,8 @@ use Magento\Store\Model\ScopeInterface;
  */
 class Config
 {
+    public const XML_PATH_SMS_SUBSCRIPTION_ENABLED = 'magebit_klaviyo/sms_validation/sms_subscription_enabled';
+
     public const XML_PATH_SMS_VALIDATION_COUNTRIES = 'magebit_klaviyo/sms_validation/countries';
 
     /**
@@ -25,6 +27,14 @@ class Config
     public function __construct(
         private readonly ScopeConfigInterface $scopeConfig
     ) {
+    }
+
+    /**
+     * @return bool
+     */
+    public function isSmsEnabled(): bool
+    {
+        return (bool) $this->scopeConfig->getValue(self::XML_PATH_SMS_SUBSCRIPTION_ENABLED);
     }
 
     /**

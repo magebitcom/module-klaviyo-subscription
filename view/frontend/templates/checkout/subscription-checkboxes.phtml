@@ -38,7 +38,8 @@ $icons = $viewModels->require(SvgIcons::class);
     <div class="px-5 md:px-0 pt-8">
         <div>
             <fieldset>
-                <?php if (!isset($subscriptions['general_subscription']) || !$subscriptions['general_subscription']): ?>
+                <?php if ($subscribeToSmSViewModel->isNewsletterEnabledOnCheckout() &&
+                    (!isset($subscriptions['general_subscription']) || !$subscriptions['general_subscription'])): ?>
                     <div class="field choice mb-3 flex items-center">
                         <input type="checkbox"
                                id="general_subscription_desktop"
@@ -51,7 +52,8 @@ $icons = $viewModels->require(SvgIcons::class);
                         </label>
                     </div>
                 <?php endif; ?>
-                <?php if ($magewire->showSmSSubscription() && (!isset($subscriptions['sms_subscription']) ||
+                <?php if ($subscribeToSmSViewModel->isSmsEnabledOnCheckout() &&
+                    $magewire->showSmSSubscription() && (!isset($subscriptions['sms_subscription']) ||
                         !$subscriptions['sms_subscription'])): ?>
                     <div class="field choice flex items-start">
                         <input type="checkbox"

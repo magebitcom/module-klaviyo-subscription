@@ -9,7 +9,7 @@ declare(strict_types=1);
 
 use Hyva\Theme\Model\ViewModelRegistry;
 use Hyva\Theme\ViewModel\SvgIcons;
-use Magebit\Checkout\ViewModel\Telephone;
+use Magebit\KlaviyoSubscription\ViewModel\Telephone;
 use Magento\Framework\Escaper;
 use Magento\Framework\View\Element\Template;
 use Magebit\KlaviyoSubscription\ViewModel\KlaviyoSubscriptionViewModel;
@@ -21,7 +21,7 @@ use Hyva\Theme\ViewModel\Modal;
 
 /** @var KlaviyoSubscriptionViewModel $subscribeToSmSViewModel */
 $subscribeToSmSViewModel = $viewModels->require(KlaviyoSubscriptionViewModel::class);
-if (!$subscribeToSmSViewModel->isKlaviyoEnabled()) {
+if (!$subscribeToSmSViewModel->isKlaviyoEnabled() || !$subscribeToSmSViewModel->isSmsEnabled()) {
     return;
 }
 

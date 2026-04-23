@@ -17,9 +17,13 @@
             <tab>magebit</tab>
             <resource>Magebit_KlaviyoSubscription::config</resource>
             <group id="sms_validation" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="sms_subscription_enabled" translate="label" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Sms subscription enabled</label>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
                 <label>SMS phone validation</label>
                 <comment>Regions where a telephone number is accepted for Klaviyo SMS subscribe flows. Align with Klaviyo SMS availability.</comment>
-                <field id="countries" translate="label comment" type="multiselect" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
+                <field id="countries" translate="label comment" type="multiselect" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1" canRestore="1">
                     <label>Allowed countries</label>
                     <comment>Select ISO country codes used when validating customer phone numbers for SMS subscription (checkout, account, newsletter).</comment>
                     <source_model>Magebit\KlaviyoSubscription\Model\Config\Source\KlaviyoSmsCountries</source_model>

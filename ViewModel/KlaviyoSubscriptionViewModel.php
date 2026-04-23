@@ -29,6 +29,7 @@ use Magento\Newsletter\Model\SubscriptionManager;
 use Magento\Quote\Model\Quote;
 use Magento\Store\Model\StoreManagerInterface;
 use Magento\Newsletter\Model\SubscriberFactory;
+use Magebit\KlaviyoSubscription\Model\Config as MagebitConfig;
 
 /**
  * ViewModel for customer subscriptions.
@@ -55,7 +56,8 @@ class KlaviyoSubscriptionViewModel implements ArgumentInterface
      * @param SubscriberFactory $subscriberFactory
      * @param KlaviyoHelper $klaviyoHelper
      * @param SmsPhoneValidationInterface $smsPhoneValidation
-     * @param KlaviyoSubscriptionConfig $klaviyoSubscriptionConfig
+     * @param MagebitConfig $klaviyoSubscriptionConfig
+     * @param MagebitConfig $magebitConfig
      */
     public function __construct(
         private readonly Session $customerSession,
@@ -72,7 +74,8 @@ class KlaviyoSubscriptionViewModel implements ArgumentInterface
         private readonly SubscriberFactory $subscriberFactory,
         private readonly KlaviyoHelper $klaviyoHelper,
         private readonly SmsPhoneValidationInterface $smsPhoneValidation,
-        private readonly KlaviyoSubscriptionConfig $klaviyoSubscriptionConfig
+        private readonly KlaviyoSubscriptionConfig $klaviyoSubscriptionConfig,
+        private readonly MagebitConfig $magebitConfig,
     ) {
     }
 
@@ -283,6 +286,10 @@ class KlaviyoSubscriptionViewModel implements ArgumentInterface
      */
     public function showSmSCheckbox(): bool
     {
+        if (!$this->magebitConfig->isSmsEnabled()) {
+            return false;
+        }
+
         $customer = $this->getCustomerData();
 
         if ($this->isCustomerSmsSubscribed()) {
@@ -332,5 +339,36 @@ class KlaviyoSubscriptionViewModel implements ArgumentInterface
     public function isKlaviyoEnabled(): bool
     {
         return (bool) $this->scopeSetting->isEnabled();
+    }
+
+    /**
+     * Check if SMS enabled
+     *
+     * @return bool
+     */
+    public function isSmsEnabled(): bool
+    {
+        return (bool) $this->magebitConfig->isSmsEnabled();
+    }
+
+    /**
+     * Check if newsletter is enabled at checkout
+     *
+     * @return bool
+     */
+    public function isNewsletterEnabledOnCheckout(): bool
+    {
+        return (bool) $this->scopeSetting->getConsentAtCheckoutEmailIsActive();
+    }
+
+    /**
+     * Check if SMS is enabled at checkout
+     *
+     * @return bool
+     */
+    public function isSmsEnabledOnCheckout(): bool
+    {
+        return (bool) $this->scopeSetting->getConsentAtCheckoutSMSIsActive() &&
+            $this->isSmsEnabled();
     }
 }
