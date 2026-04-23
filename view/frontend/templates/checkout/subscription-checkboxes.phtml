@@ -11,18 +11,12 @@ use Hyva\Theme\Model\ViewModelRegistry;
 use Magebit\KlaviyoSubscription\Magewire\Component\SubscriptionCheckboxes;
 use Magebit\KlaviyoSubscription\ViewModel\KlaviyoSubscriptionViewModel;
 use Magento\Framework\Escaper;
-use Magebit\RequestCatalog\ViewModel\PrivacyPolicy;
-use Hyva\Theme\ViewModel\Modal;
 use Hyva\Theme\ViewModel\SvgIcons;
 
 /** @var ViewModelRegistry $viewModels */
 /** @var Escaper $escaper */
 /** @var SubscriptionCheckboxes $magewire */
 /** @var SvgIcons $icons */
-
-$privacyPolicyViewModel = $viewModels->require(PrivacyPolicy::class);
-$popupContent = $privacyPolicyViewModel->getPopupContent();
-$modalViewModel = $viewModels->require(Modal::class);
 
 /** @var KlaviyoSubscriptionViewModel $subscribeToSmSViewModel */
 $subscribeToSmSViewModel = $viewModels->require(KlaviyoSubscriptionViewModel::class);
