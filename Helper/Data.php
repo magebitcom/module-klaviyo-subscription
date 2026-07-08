@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Magebit\KlaviyoSubscription\Helper;
 
+use Exception;
 use Klaviyo\Reclaim\Helper\Data as Origin;
 use Klaviyo\Reclaim\Helper\Logger;
 use Klaviyo\Reclaim\Helper\ScopeSetting;
@@ -63,7 +64,7 @@ class Data extends Origin
         $phoneNumber = $user['response']['data'][0]['attributes']['phone_number'];
         try {
             $response = $api->unsubscribeSmSFromKlaviyoList($email, $phoneNumber);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->_klaviyoLogger->log(sprintf('Unable to unsubscribe %s: %s', $email, $e));
             $response = false;
         }
@@ -88,7 +89,7 @@ class Data extends Origin
 
         try {
             $response = $api->subscribeSmSToKlaviyoList($email, $telephone, $listId);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->_klaviyoLogger->log(sprintf('Unable to subscribe %s to list %s: %s', $email, $listId, $e));
             $response = false;
         }
@@ -112,7 +113,11 @@ class Data extends Origin
         }
 
         $customer->getExtensionAttributes()->setIsSmsSubscribed($isSmsSubscribed);
-        $this->customerRepository->save($customer);
+        try {
+            $this->customerRepository->save($customer);
+        } catch (Exception $e) {
+            $this->_logger->error($e->getMessage());
+        }
     }
 
     /**
