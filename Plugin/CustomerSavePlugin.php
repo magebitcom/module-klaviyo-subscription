@@ -63,10 +63,12 @@ class CustomerSavePlugin
             return $result;
         }
 
+        $customerData = $requestParams['customer'];
+
         // Use $result instead of $customer to ensure we have the saved customer with ID
-        $isSmsSubscribed = (bool) $this->request->getParams()['customer']['is_sms_subscribed'];
+        $isSmsSubscribed = (bool) ($customerData['is_sms_subscribed'] ?? false);
         $this->manageSmsSubscription($result, $isSmsSubscribed);
-        $isNewsletterSubscribed = (bool) $this->request->getParams()['customer']['newsletter_subscription'];
+        $isNewsletterSubscribed = (bool) ($customerData['newsletter_subscription'] ?? false);
         $this->manageEmailSubscription($result, $isNewsletterSubscribed);
 
         return $result;
