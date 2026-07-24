@@ -1,0 +1,94 @@
+<?php
+/**
+ * @author Magebit <info@magebit.com>
+ * @copyright Copyright (c) Magebit, Ltd. (https://magebit.com)
+ * @license https://magebit.com/code-license
+ */
+
+declare(strict_types=1);
+
+use Hyva\Theme\Model\ViewModelRegistry;
+use Hyva\Theme\ViewModel\HyvaCsp;
+use Klaviyo\Reclaim\Block\Initialize;
+use Magento\Framework\Escaper;
+
+/** @var Initialize $block */
+/** @var Escaper $escaper */
+/** @var ViewModelRegistry $viewModels */
+
+/** @var HyvaCsp $hyvaCsp */
+$hyvaCsp = $viewModels->require(HyvaCsp::class);
+
+$klaviyoKey = $block->getPublicApiKey();
+?>
+<?php if ($block->isKlaviyoEnabled() && $klaviyoKey): ?>
+    <div x-data="initKlaviyoCustomerTracking()"
+         @private-content-loaded.window="sendCustomerDataToKlaviyo(event.detail.data)"></div>
+    <script>
+        <?php /* Official minified Klaviyo queue stub, kept verbatim. */ ?>
+        <?php /* phpcs:disable Generic.Files.LineLength.TooLong */ ?>
+        !function(){if(!window.klaviyo){window._klOnsite=window._klOnsite||[];try{window.klaviyo=new Proxy({},{get:function(n,i){return"push"===i?function(){var n;(n=window._klOnsite).push.apply(n,arguments)}:function(){for(var n=arguments.length,o=new Array(n),w=0;w<n;w++)o[w]=arguments[w];var t="function"==typeof o[o.length-1]?o.pop():void 0,e=new Promise((function(n){window._klOnsite.push([i].concat(o,[function(i){t&&t(i),n(i)}]))}));return e}}})}catch(n){window.klaviyo=window.klaviyo||[],window.klaviyo.push=function(){var n;(n=window._klOnsite).push.apply(n,arguments)}}}}();
+        <?php /* phpcs:enable Generic.Files.LineLength.TooLong */ ?>
+
+        (function () {
+            // Klaviyo sets tracking cookies (__kla_id), so its script must only load once the
+            // visitor has consented to the GDPR cookie group that contains it.
+            let klaviyoLoaded = false;
+
+            function klaviyoConsentGranted() {
+                const cookieConfig = window.COOKIE_CONFIG || {};
+                if (!cookieConfig.cookie_restriction_enabled) {
+                    return true;
+                }
+
+                const consentConfig = window.cookie_consent_config || {};
+                const consentGroups = window.cookie_consent_groups || {};
+                const groupKey = Object.keys(consentConfig).find(key =>
+                    key !== 'necessary' && (consentConfig[key] || []).includes('__kla_id')
+                );
+
+                return groupKey ? consentGroups[groupKey] === true : false;
+            }
+
+            function loadKlaviyo() {
+                if (klaviyoLoaded || !klaviyoConsentGranted()) {
+                    return;
+                }
+                klaviyoLoaded = true;
+
+                const script = document.createElement('script');
+                script.async = true;
+                script.src = 'https://static.klaviyo.com/onsite/js/<?= $escaper->escapeJs($klaviyoKey) ?>/klaviyo.js';
+                document.head.appendChild(script);
+            }
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', loadKlaviyo);
+            } else {
+                loadKlaviyo();
+            }
+
+            window.addEventListener('user-allowed-save-cookie', loadKlaviyo);
+        })();
+
+        function initKlaviyoCustomerTracking() {
+            return {
+                sendCustomerDataToKlaviyo(data) {
+                    window.klaviyo = window.klaviyo || [];
+                    const customer = data.customer;
+
+                    window.klaviyo.isIdentified().then((identified) => {
+                        if (customer && customer.email && !identified) {
+                            window.klaviyo.identify({
+                                '$email': customer.email,
+                                '$first_name': customer.firstname ? customer.firstname : '',
+                                '$last_name': customer.lastname ? customer.lastname : ''
+                            });
+                        }
+                    });
+                }
+            }
+        }
+    </script>
+    <?php $hyvaCsp->registerInlineScript() ?>
+<?php endif; ?>
