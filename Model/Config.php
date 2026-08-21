@@ -9,7 +9,9 @@ declare(strict_types=1);
 
 namespace Magebit\KlaviyoSubscription\Model;
 
+use Klaviyo\Reclaim\Helper\ScopeSetting;
 use Magento\Framework\App\Config\ScopeConfigInterface;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Store\Model\ScopeInterface;
 
 /**
@@ -58,5 +60,54 @@ class Config
         $parts = array_map('trim', explode(',', $value));
 
         return array_values(array_filter($parts, static fn (string $code): bool => $code !== ''));
+    }
+
+    /**
+     * Is the Klaviyo extension itself enabled for this store
+     *
+     * A store id that no longer exists counts as disabled rather than throwing — see
+     * {@see LanguageResolver::resolve()} for why stale store ids reach us at all.
+     *
+     * @param int|null $storeId
+     * @return bool
+     */
+    public function isKlaviyoEnabled(?int $storeId): bool
+    {
+        if ($storeId === null) {
+            return $this->scopeConfig->isSetFlag(ScopeSetting::ENABLE);
+        }
+
+        try {
+            return $this->scopeConfig->isSetFlag(
+                ScopeSetting::ENABLE,
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            );
+        } catch (NoSuchEntityException $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Klaviyo private API key. Magento decrypts obscure fields on read, so this is the pk_ value.
+     *
+     * @param int|null $storeId
+     * @return string
+     */
+    public function getPrivateApiKey(?int $storeId): string
+    {
+        if ($storeId === null) {
+            return trim((string) $this->scopeConfig->getValue(ScopeSetting::PRIVATE_API_KEY));
+        }
+
+        try {
+            return trim((string) $this->scopeConfig->getValue(
+                ScopeSetting::PRIVATE_API_KEY,
+                ScopeInterface::SCOPE_STORE,
+                $storeId
+            ));
+        } catch (NoSuchEntityException $e) {
+            return '';
+        }
     }
 }

@@ -29,4 +29,21 @@
     <type name="Magento\Customer\Api\CustomerRepositoryInterface">
         <plugin name="join_attributes" type="Magebit\KlaviyoSubscription\Plugin\CustomerRepositoryPlugin" />
     </type>
+    <type name="Magento\Customer\Api\AccountManagementInterface">
+        <plugin name="magebit_klaviyo_profile_language_on_account_create"
+                type="Magebit\KlaviyoSubscription\Plugin\SyncLanguageOnAccountCreate"/>
+    </type>
+    <type name="Klaviyo\Reclaim\Model\Events">
+        <plugin name="magebit_klaviyo_event_language"
+                type="Magebit\KlaviyoSubscription\Plugin\AddLanguageToKlaviyoEvent"/>
+    </type>
+    <type name="Magento\Framework\Console\CommandListInterface">
+        <arguments>
+            <argument name="commands" xsi:type="array">
+                <item name="magebit_klaviyo_backfill_profile_language" xsi:type="object">
+                    Magebit\KlaviyoSubscription\Console\Command\BackfillProfileLanguage
+                </item>
+            </argument>
+        </arguments>
+    </type>
 </config>
